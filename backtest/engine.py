@@ -193,7 +193,7 @@ class BacktestEngine:
             entry_time=timestamp,
             stop_loss=stop_loss,
             take_profit=take_profit,
-            signals_json=json.dumps(decision),
+            signals_json=json.dumps(decision, default=str),
         )
         self.open_trades.append(trade)
 
