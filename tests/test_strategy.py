@@ -38,9 +38,14 @@ class TestStrategyParameters:
         params = StrategyParameters()
         assert params.rsi_period == 14
         assert params.bb_period == 20
-        assert 0.99 < (params.weight_rsi + params.weight_bollinger +
-                       params.weight_volume + params.weight_garch +
-                       params.weight_momentum + params.weight_sentiment) < 1.01
+        # 12개 가중치 합계 = 1.0
+        total = (params.weight_rsi + params.weight_bollinger +
+                 params.weight_volume + params.weight_garch +
+                 params.weight_momentum + params.weight_sentiment +
+                 params.weight_williams + params.weight_elder +
+                 params.weight_ichimoku + params.weight_market_structure +
+                 params.weight_patterns + params.weight_quant)
+        assert 0.99 < total < 1.01
 
     def test_json_roundtrip(self):
         params = StrategyParameters(rsi_period=21)
@@ -53,8 +58,13 @@ class TestStrategyParameters:
                                      weight_volume=1.0, weight_garch=1.0,
                                      weight_momentum=1.0, weight_sentiment=1.0)
         params.normalize_weights()
-        total = (params.weight_rsi + params.weight_bollinger + params.weight_volume +
-                 params.weight_garch + params.weight_momentum + params.weight_sentiment)
+        weight_names = [
+            "weight_rsi", "weight_bollinger", "weight_volume",
+            "weight_garch", "weight_momentum", "weight_sentiment",
+            "weight_williams", "weight_elder", "weight_ichimoku",
+            "weight_market_structure", "weight_patterns", "weight_quant",
+        ]
+        total = sum(getattr(params, w) for w in weight_names)
         assert abs(total - 1.0) < 0.001
 
     def test_clone(self):
@@ -147,11 +157,11 @@ class TestComposite:
         assert isinstance(result, CompositeSignal)
         assert -1.0 <= result.score <= 1.0
         assert result.signal in ("strong_long", "long", "neutral", "short", "strong_short")
-        assert len(result.components) >= 5
+        assert len(result.components) >= 10  # 5 기존 + 5 서적
 
     def test_composite_with_sentiment(self):
         df = make_ohlcv_df(200)
         params = StrategyParameters()
         sentiment = SignalOutput(name="sentiment", value=0.5, confidence=0.7)
         result = compute_composite_signal(df, params, sentiment)
-        assert len(result.components) == 6
+        assert len(result.components) >= 11

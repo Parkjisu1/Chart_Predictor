@@ -40,13 +40,23 @@ class StrategyParameters:
     adx_strong_trend: float = 25.0
     adx_weak_trend: float = 20.0
 
-    # Composite Weights
-    weight_rsi: float = 0.20
-    weight_bollinger: float = 0.15
-    weight_volume: float = 0.15
-    weight_garch: float = 0.10
-    weight_momentum: float = 0.25
-    weight_sentiment: float = 0.15
+    # Composite Weights (기존 기술지표)
+    weight_rsi: float = 0.10
+    weight_bollinger: float = 0.08
+    weight_volume: float = 0.07
+    weight_garch: float = 0.05
+    weight_momentum: float = 0.12
+    weight_sentiment: float = 0.08
+
+    # Composite Weights (서적 기반 전략)
+    weight_williams: float = 0.08       # Larry Williams
+    weight_elder: float = 0.08          # Alexander Elder
+    weight_ichimoku: float = 0.08       # 일목균형표
+    weight_market_structure: float = 0.08  # John Murphy
+    weight_patterns: float = 0.08       # Minervini/Weinstein/Wyckoff
+
+    # Composite Weights (퀀트 데이터)
+    weight_quant: float = 0.10          # 퀀트 종합 (OI, 롱숏, 공포탐욕, 고래)
 
     # Signal Thresholds
     strong_signal_threshold: float = 0.7
@@ -75,7 +85,13 @@ class StrategyParameters:
         "weight_volume": (0.05, 0.30),
         "weight_garch": (0.05, 0.20),
         "weight_momentum": (0.10, 0.40),
-        "weight_sentiment": (0.05, 0.30),
+        "weight_sentiment": (0.02, 0.20),
+        "weight_williams": (0.02, 0.20),
+        "weight_elder": (0.02, 0.20),
+        "weight_ichimoku": (0.02, 0.20),
+        "weight_market_structure": (0.02, 0.20),
+        "weight_patterns": (0.02, 0.20),
+        "weight_quant": (0.02, 0.20),
         "strong_signal_threshold": (0.5, 0.9),
         "signal_threshold": (0.1, 0.5),
         "stop_loss_atr_multiplier": (1.0, 4.0),
@@ -97,16 +113,17 @@ class StrategyParameters:
         return StrategyParameters.from_json(self.to_json())
 
     def normalize_weights(self) -> None:
-        """Ensure composite weights sum to 1.0."""
-        total = (self.weight_rsi + self.weight_bollinger + self.weight_volume +
-                 self.weight_garch + self.weight_momentum + self.weight_sentiment)
+        """Ensure all composite weights sum to 1.0."""
+        weight_names = [
+            "weight_rsi", "weight_bollinger", "weight_volume",
+            "weight_garch", "weight_momentum", "weight_sentiment",
+            "weight_williams", "weight_elder", "weight_ichimoku",
+            "weight_market_structure", "weight_patterns", "weight_quant",
+        ]
+        total = sum(getattr(self, w) for w in weight_names)
         if total > 0:
-            self.weight_rsi /= total
-            self.weight_bollinger /= total
-            self.weight_volume /= total
-            self.weight_garch /= total
-            self.weight_momentum /= total
-            self.weight_sentiment /= total
+            for w in weight_names:
+                setattr(self, w, getattr(self, w) / total)
 
 
 @dataclass
